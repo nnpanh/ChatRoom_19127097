@@ -2,89 +2,104 @@ package Server;
 
 import java.io.*;
 import java.net.Socket;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.util.StringTokenizer;
 
 public class Services extends Thread {
-    final DataInputStream in; //Take message from client
-    final DataOutputStream out; //Print on client terminal
-    final ObjectOutputStream oos;
-    final Socket socket;
+    private final BufferedReader input;
+    private final BufferedWriter output;
+    private final Socket socket;
     private String username;
-    private ArrayList<String> Clients;
-    private String bookName;
+    //private ArrayList<String> Clients;
+    private final HashMap<String, String> accounts;
 
     // Constructor
-    public Services(Socket s, ArrayList<String> c) throws IOException {
-        socket = s;
-        Clients = c;
+    public Services(Socket socket) throws IOException {
+        this.socket = socket;
+        //Clients = c;
 
         //Communicate with client:
-        in = new DataInputStream(socket.getInputStream());
-        out = new DataOutputStream(socket.getOutputStream());
-        oos = new ObjectOutputStream(out);
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
+
+        //Load accounts:
+        accounts = new HashMap<>();
+        readAccounts();
     }
 
     private void Login() throws IOException {
         String password;
-        Boolean isCorrected = false;
+        boolean isCorrected = false;
         System.out.println("Client logins");
         while (!isCorrected) {
             // Receive user account
-            username = in.readUTF();
-            password = in.readUTF();
+            username = input.readLine();
+            password = input.readLine();
 
-            if(username.equals("guest") && (password.equals("123")))
-                isCorrected=true;
-            out.writeBoolean(isCorrected);
+            String pw = accounts.get(username);
+            if (pw.equals(password)) {
+                isCorrected = true;
+                output.write("true");
+                output.newLine();
+                output.flush();
+            } else {
+                output.write("false");
+                output.newLine();
+                output.flush();
+            }
         }
-        System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                + "] User: " + username + " logins successfully!");
-        Clients.add(username);
+        System.out.println("User: " + username + " logins successfully!");
+        //Clients.add(username);
     }
 
     private void Register() throws IOException {
         String password, confirm;
-        Boolean Regis_Success = false;
-        System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                + "] Client registers ");
-
-       // DataHandler dataHandler = new DataHandler();
+        boolean Regis_Success = false;
+        System.out.println("Client registers ");
 
         while (!Regis_Success) {
             //Receive user account
-            username = in.readUTF();
-            password = in.readUTF();
-            confirm = in.readUTF();
+            username = input.readLine();
+            password = input.readLine();
+            confirm = input.readLine();
 
             if (!password.equals(confirm)) {
-                System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                        + "] Failed to register");
-                out.writeBoolean(false);
-
+                System.out.println("Failed to register - confirm");
+                output.write("false");
+                output.newLine();
+                output.flush();
             } else {
-               // Regis_Success = dataHandler.Register(username, password);
-                out.writeBoolean(Regis_Success); //Gui ve ham regis cua client xu ly
-                if (Regis_Success)
-                    System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                            + "] User: " + username + " registers successfully!");
-                else
-                    System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                            + "] Failed to register");
+                //Check account
+                String existAccount = accounts.get(username);
+                if (existAccount == null)
+                    Regis_Success = true;
+                if (Regis_Success) {
+                    output.write("true");
+                    output.newLine();
+                    output.flush();
+                    System.out.println("User: " + username + " registers successfully!");
+                } else {
+                    output.write("false");
+                    output.newLine();
+                    output.flush();
+                    System.out.println("Failed to register - account existed");
+                }
             }
         }
 
     }
 
-    private void SignIn_Form() throws IOException, SQLException {
+    private void SignIn_Form() throws IOException {
         //Receive 1: Login, 2: Register
         String op;
         do {
-            op = in.readUTF();
-            out.writeUTF(op);
+            op = input.readLine();
+            output.write(op);
+            output.newLine();
+            output.flush();
             if (op.equals("1"))
                 Login();
             else
@@ -93,69 +108,34 @@ public class Services extends Thread {
         } while (!op.equals("1"));
     }
 
+    private void readAccounts() {
+        try {
+            FileInputStream fileInputStream = new FileInputStream("Project/resource/account.txt");
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-    private void View() throws IOException {
-        int bytes;
-        System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                + "] User: " + username + " views book " + bookName);
-
-        File file = new File("Books\\Server\\" + bookName + ".txt");
-        FileInputStream fileInputStream = new FileInputStream(file);
-
-        // send file size
-        out.writeLong(file.length());
-
-        // break file into chunks
-        byte[] buffer = new byte[4 * 1024];
-
-        while ((bytes = fileInputStream.read(buffer)) != -1) {
-            out.write(buffer, 0, bytes);
-            out.flush();
-        }
-        fileInputStream.close();
-    }
-
-
-    private void Download() throws IOException {
-        System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                + "] User: " + username + " downloads book " + bookName);
-        int bytes;
-
-        File file = new File("Books\\Server\\" + bookName + ".txt");
-        FileInputStream fileInputStream = new FileInputStream(file);
-
-        // send file size
-        out.writeLong(file.length());
-
-        // break file into chunks
-        byte[] buffer = new byte[4 * 1024];
-
-        while ((bytes = fileInputStream.read(buffer)) != -1) {
-            out.write(buffer, 0, bytes);
-            out.flush();
-        }
-        fileInputStream.close();
-    }
-
-    private void Main_Menu() throws IOException, SQLException {
-        String option = in.readUTF();
-
-        switch (option) {
-            case "1" -> View();
-            case "2" -> Download();
-            default -> {
-                View();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                StringTokenizer tokenizer = new StringTokenizer(line, "`");
+                if (tokenizer.countTokens() == 2) {
+                    accounts.put(tokenizer.nextToken(), tokenizer.nextToken());
+                }
             }
+            bufferedReader.close();
+            inputStreamReader.close();
+            fileInputStream.close();
+        } catch (
+                IOException e) {
+            e.printStackTrace();
         }
+        System.out.println("Loading data complete");
     }
 
     private void Disconnect() {
-        System.out.println("\n" + "[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
-                + "] Close connection with client: " + socket + "\n");
+        System.out.println("Close connection with client: " + socket + "\n");
         try {
-            in.close();
-            out.close();
-            oos.close();
+            input.close();
+            output.close();
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -165,13 +145,12 @@ public class Services extends Thread {
     @Override
     public void run() {
       try {
-            //SignIn_Form();
-            Login();
-           // Main_Menu();
-        } catch (IOException e) {
+          Scanner scanner = new Scanner(System.in);
+          SignIn_Form();
+      } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            Clients.remove(username);
+          //Clients.remove(username);
             Disconnect();
         }
 

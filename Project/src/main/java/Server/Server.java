@@ -1,25 +1,22 @@
 package Server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 public class Server {
     final ServerSocket server;
-    private final ExecutorService pool = Executors.newFixedThreadPool(5);
+   // private final ExecutorService pool = Executors.newFixedThreadPool(5);
     private ArrayList<String> clients;
 
     //Establish a connection between server and clients
-    public Server(String IP, int port) throws IOException {
-        server = new ServerSocket(port, 1, InetAddress.getByName(IP));
-        clients = new ArrayList<>();
+    public Server(int port) throws IOException {
+        server = new ServerSocket(port);
+        Connect();
 
     }
-
 
     public void Connect() throws IOException {
         System.out.println("Waiting for clients.... \n ");
@@ -29,12 +26,11 @@ public class Server {
                 socket = server.accept();
 
                 System.out.println("A new client connected : " + socket + "\n");
-
                 // create a new thread object
-                Services ClientHandler = new Services(socket, clients);
-
+                Services ClientHandler = new Services(socket);
+                ClientHandler.start();
                 //Add to pool thread
-                pool.execute(ClientHandler);
+               // pool.execute(ClientHandler);
 
             } catch (IOException e) {
                 if (socket != null)
@@ -43,14 +39,6 @@ public class Server {
                 System.out.println("Connection closed: " + socket);
                 e.printStackTrace();
             }
-        }
-    }
-
-    public void run() {
-        try {
-                Connect();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

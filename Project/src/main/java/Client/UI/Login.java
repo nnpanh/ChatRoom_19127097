@@ -4,9 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class Login extends JFrame {
@@ -18,13 +16,13 @@ public class Login extends JFrame {
     private final JPasswordField tfPassword = new JPasswordField("123", 15);
     private final JButton btnSignUp = new JButton("Login");
     private Socket socket = null;
-    private DataOutputStream output = null;
-    private DataInputStream input = null;
+    private BufferedReader input = null;
+    private BufferedWriter output = null;
 
     public Login(Socket socket) throws IOException {
         this.socket = socket;
-        output = new DataOutputStream(socket.getOutputStream());
-        input = new DataInputStream(socket.getInputStream());
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         addComponents();
         this.setTitle("Chat Room | Login");
         this.setSize(new Dimension(400, 350));
@@ -115,13 +113,16 @@ public class Login extends JFrame {
     private void action(ActionEvent e) {
         if (e.getSource() == btnSignUp) {
             try {
-                output.writeUTF(tfUsername.getText());
-                output.writeUTF(String.valueOf(tfPassword.getPassword()));
+                output.write(tfUsername.getText());
+                output.newLine();
+                output.flush();
+                output.write(String.valueOf(tfPassword.getPassword()));
+                output.newLine();
                 output.flush();
 
                 boolean LoginSuccess = false;
-                LoginSuccess = input.readBoolean(); //Receive regis_flag from sv
-
+                String value= input.readLine(); //Receive regis_flag from sv
+                if (value.equals("true")) LoginSuccess=true;
                 if (LoginSuccess) {
                     JOptionPane.showMessageDialog(null, "Login successfully");
                     this.setVisible(false);

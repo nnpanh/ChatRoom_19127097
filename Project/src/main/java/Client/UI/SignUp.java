@@ -4,38 +4,35 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class SignUp extends JFrame {
-    private Socket socket = null;
-    private DataOutputStream output = null;
-    private DataInputStream input = null;
+    private BufferedWriter output;
+    private BufferedReader input;
 
-    private final JLabel lbName = new JLabel("Name");
     private final JLabel lbUsername = new JLabel("Username");
     private final JLabel lbPassword = new JLabel("Password");
+    private final JLabel lbConfirm = new JLabel("Confirm");
     private final JLabel lbTitle = new JLabel("CREATE A NEW ACCOUNT");
     private final JLabel lbFooter = new JLabel("HCMUS-CLC-19KTPM3-Introduction to Java-19127097");
 
-    private final JTextField tfName = new JTextField("Phuong Anh", 15);
-    private final JTextField tfUsername = new JTextField("guest", 15);
-    private final JPasswordField tfPassword = new JPasswordField("123", 15);
+    private final JTextField tfUsername = new JTextField(15);
+    private final JPasswordField tfConfirm = new JPasswordField( 15);
+    private final JPasswordField tfPassword = new JPasswordField(15);
 
     private final JButton btnSignUp = new JButton("Create");
 
     public SignUp(Socket socket) throws IOException {
-        this.socket=socket;
-        output = new DataOutputStream(socket.getOutputStream());
-        input = new DataInputStream(socket.getInputStream());
+        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-        addComponents();
         this.setTitle("Chat Room | Sign Up");
         this.setSize(new Dimension(500, 400));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
+
+        addComponents();
     }
     public void waitForInputs() throws InterruptedException {
         synchronized (this) {
@@ -44,7 +41,7 @@ public class SignUp extends JFrame {
     }
     public void run() throws InterruptedException {
         this.setVisible(true);
-        waitForInputs();
+        this.waitForInputs();
 
     }
     public void addComponents() {
@@ -73,7 +70,11 @@ public class SignUp extends JFrame {
         btnSignUp.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                action(e);
+                try {
+                    action(e);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         });
 
@@ -83,29 +84,29 @@ public class SignUp extends JFrame {
         position.anchor = GridBagConstraints.LINE_START;
         position.gridx = 0;
         position.gridy = 0;
-        lbName.setFont(new Font("Serif", Font.PLAIN, 18));
-        pnForm.add(lbName, position);
-        position.gridx = 0;
-        position.gridy = 1;
         lbUsername.setFont(new Font("Serif", Font.PLAIN, 18));
         pnForm.add(lbUsername, position);
         position.gridx = 0;
-        position.gridy = 2;
+        position.gridy = 1;
         lbPassword.setFont(new Font("Serif", Font.PLAIN, 18));
         pnForm.add(lbPassword, position);
+        position.gridx = 0;
+        position.gridy = 2;
+        lbConfirm.setFont(new Font("Serif", Font.PLAIN, 18));
+        pnForm.add(lbConfirm, position);
 
         position.gridx = 1;
         position.gridy = 0;
-        tfName.setFont(new Font("Serif", Font.PLAIN, 18));
-        pnForm.add(tfName, position);
-        position.gridx = 1;
-        position.gridy = 1;
         tfUsername.setFont(new Font("Serif", Font.PLAIN, 18));
         pnForm.add(tfUsername, position);
         position.gridx = 1;
-        position.gridy = 2;
+        position.gridy = 1;
         tfPassword.setFont(new Font("Serif", Font.PLAIN, 18));
         pnForm.add(tfPassword, position);
+        position.gridx = 1;
+        position.gridy = 2;
+        tfConfirm.setFont(new Font("Serif", Font.PLAIN, 18));
+        pnForm.add(tfConfirm, position);
 
         position.gridx = 0;
         position.gridy = 3;
@@ -122,10 +123,35 @@ public class SignUp extends JFrame {
         this.add(pnMain);
     }
 
-    private void action(ActionEvent e) {
+    private void action(ActionEvent e) throws IOException {
         if (e.getSource()== btnSignUp){
-            synchronized (this) {
-                notifyAll();
+            try {
+                output.write(tfUsername.getText());
+                output.newLine();
+                output.flush();
+                output.write(String.valueOf(tfPassword.getPassword()));
+                output.newLine();
+                output.flush();
+                output.write(String.valueOf(tfConfirm.getPassword()));
+                output.newLine();
+                output.flush();
+
+                boolean RegisSuccess = false;
+                String value = input.readLine();
+                if (value.equals("true")) RegisSuccess=true;
+                else if (value.equals("false")) System.out.println("get False");
+                else System.out.println("Error");
+                if (RegisSuccess) {
+                    JOptionPane.showMessageDialog(null, "Register successfully");
+                    synchronized (this) {
+                        notifyAll();
+                    }
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to register");
+                }
+            } catch (IOException io) {
+                System.out.println("Close GUI");
             }
         }
     }
