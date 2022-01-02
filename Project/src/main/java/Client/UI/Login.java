@@ -14,13 +14,15 @@ public class Login extends JFrame {
     private final JLabel lbFooter = new JLabel("HCMUS-CLC-19KTPM3-Introduction to Java-19127097");
     private final JTextField tfUsername = new JTextField("guest", 15);
     private final JPasswordField tfPassword = new JPasswordField("123", 15);
-    private final JButton btnSignUp = new JButton("Login");
+    private final JButton btnLogin = new JButton("Login");
     private Socket socket = null;
     private BufferedReader input = null;
     private BufferedWriter output = null;
+    private Thread thread;
 
-    public Login(Socket socket) throws IOException {
+    public Login(Socket socket,Thread t) throws IOException {
         this.socket = socket;
+        thread = t;
         input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         addComponents();
@@ -30,15 +32,9 @@ public class Login extends JFrame {
         this.setLocationRelativeTo(null);
     }
 
-    public void waitForInputs() throws InterruptedException {
-        synchronized (this) {
-            wait();
-        }
-    }
 
     public void run() throws InterruptedException {
         this.setVisible(true);
-        waitForInputs();
 
     }
 
@@ -66,7 +62,7 @@ public class Login extends JFrame {
         pnMain.setLayout(new BorderLayout());
 
         //Add actionListener for button
-        btnSignUp.addActionListener(new ActionListener() {
+        btnLogin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 action(e);
@@ -99,8 +95,8 @@ public class Login extends JFrame {
         position.gridy = 3;
         position.gridwidth = 2;
         position.anchor = GridBagConstraints.CENTER;
-        btnSignUp.setFont(new Font("Serif", Font.PLAIN, 18));
-        pnForm.add(btnSignUp, position);
+        btnLogin.setFont(new Font("Serif", Font.PLAIN, 18));
+        pnForm.add(btnLogin, position);
         this.add(pnForm);
 
         //Add panel to frame
@@ -111,12 +107,9 @@ public class Login extends JFrame {
     }
 
     private void action(ActionEvent e) {
-        if (e.getSource() == btnSignUp) {
+        if (e.getSource() == btnLogin) {
             try {
-                output.write(tfUsername.getText());
-                output.newLine();
-                output.flush();
-                output.write(String.valueOf(tfPassword.getPassword()));
+                output.write("login "+tfUsername.getText()+" "+String.valueOf(tfPassword.getPassword()));
                 output.newLine();
                 output.flush();
 
@@ -126,13 +119,12 @@ public class Login extends JFrame {
                 if (LoginSuccess) {
                     JOptionPane.showMessageDialog(null, "Login successfully");
                     this.setVisible(false);
-                    synchronized (this) {
-                        notifyAll();
-                    }
+                    thread.resume();
                     this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Failed to login");
+                } else if (value.equals("false")){
+                    JOptionPane.showMessageDialog(null, "Login fail: Wrong username/password");
                 }
+                else JOptionPane.showMessageDialog(null, "Account already logged in");
 
             } catch (IOException io) {
                 System.out.println("Close GUI");

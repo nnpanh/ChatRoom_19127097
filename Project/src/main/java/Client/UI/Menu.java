@@ -1,19 +1,17 @@
 package Client.UI;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 
 public class Menu extends JFrame {
+    private Thread thread;
     private Socket socket;
     private BufferedWriter output;
-    public  Menu(Socket socket) throws IOException {
+    public  Menu(Socket socket,Thread t) throws IOException {
         super("Pick one");
+        thread = t;
         this.socket=socket;
         output= new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         addComponents();
@@ -39,7 +37,7 @@ public class Menu extends JFrame {
         btnLogin.addActionListener(e -> {
             try {
                 LoginActionPerformed(e);
-            } catch (IOException ex) {
+            } catch (IOException | InterruptedException ex) {
                 ex.printStackTrace();
             }
         });
@@ -47,7 +45,7 @@ public class Menu extends JFrame {
         btnSignUp.addActionListener(e -> {
             try {
                 NewAccountPerformed(e);
-            } catch (IOException ex) {
+            } catch (IOException | InterruptedException ex) {
                 ex.printStackTrace();
             }
         });
@@ -69,31 +67,22 @@ public class Menu extends JFrame {
         pack();
         setLocationRelativeTo(null);
     }
-    private void NewAccountPerformed(java.awt.event.ActionEvent evt) throws IOException {
-        try {
-            output.write("2");
-            output.newLine();
-            output.flush();
-        } catch (IOException io) {
-            System.out.println("Close GUi");
-        } finally {
-            this.dispose();
-        }
+    private void NewAccountPerformed(java.awt.event.ActionEvent evt) throws IOException, InterruptedException {
+        this.setVisible(false);
+        SignUp signUp = new SignUp(socket,thread);
+        signUp.run();
+        this.dispose();
+
     }
 
-    private void LoginActionPerformed(java.awt.event.ActionEvent evt) throws IOException {
-        try {
-            output.write("1");
-            output.newLine();
-            output.flush();
-        } catch (IOException io) {
-            System.out.println("Close GUI");
-        } finally {
-            this.dispose();
-        }
+    private void LoginActionPerformed(java.awt.event.ActionEvent evt) throws IOException, InterruptedException {
+        this.setVisible(false);
+        Login login = new Login(socket,thread);
+        login.run();
+        this.dispose();
     }
 
-    public void run() throws InterruptedException {
+    public void run()  {
         this.setVisible(true);
     }
 }

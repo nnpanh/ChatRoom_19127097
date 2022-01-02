@@ -3,14 +3,14 @@ package Client.UI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
 
 public class SignUp extends JFrame {
     private BufferedWriter output;
     private BufferedReader input;
-
+    private Socket socket;
+    private Thread thread;
     private final JLabel lbUsername = new JLabel("Username");
     private final JLabel lbPassword = new JLabel("Password");
     private final JLabel lbConfirm = new JLabel("Confirm");
@@ -23,10 +23,11 @@ public class SignUp extends JFrame {
 
     private final JButton btnSignUp = new JButton("Create");
 
-    public SignUp(Socket socket) throws IOException {
+    public SignUp(Socket socket, Thread t) throws IOException {
+        this.socket=socket;
         input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
+        thread=t;
         this.setTitle("Chat Room | Sign Up");
         this.setSize(new Dimension(500, 400));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -34,15 +35,9 @@ public class SignUp extends JFrame {
 
         addComponents();
     }
-    public void waitForInputs() throws InterruptedException {
-        synchronized (this) {
-            wait();
-        }
-    }
+
     public void run() throws InterruptedException {
         this.setVisible(true);
-        this.waitForInputs();
-
     }
     public void addComponents() {
         //Set layout
@@ -67,14 +62,11 @@ public class SignUp extends JFrame {
         pnMain.setLayout(new BorderLayout());
 
         //Add actionListener for button
-        btnSignUp.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    action(e);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
+        btnSignUp.addActionListener(e -> {
+            try {
+                action(e);
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         });
 
@@ -126,31 +118,21 @@ public class SignUp extends JFrame {
     private void action(ActionEvent e) throws IOException {
         if (e.getSource()== btnSignUp){
             try {
-                output.write(tfUsername.getText());
-                output.newLine();
-                output.flush();
-                output.write(String.valueOf(tfPassword.getPassword()));
-                output.newLine();
-                output.flush();
-                output.write(String.valueOf(tfConfirm.getPassword()));
+                output.write("register "+tfUsername.getText()+" "+String.valueOf(tfPassword.getPassword())+" "+String.valueOf(tfConfirm.getPassword()));
                 output.newLine();
                 output.flush();
 
-                boolean RegisSuccess = false;
                 String value = input.readLine();
-                if (value.equals("true")) RegisSuccess=true;
-                else if (value.equals("false")) System.out.println("get False");
-                else System.out.println("Error");
-                if (RegisSuccess) {
+                if (value.equals("true")) {
                     JOptionPane.showMessageDialog(null, "Register successfully");
-                    synchronized (this) {
-                        notifyAll();
-                    }
+                    this.setVisible(false);
+                    Login login = new Login(socket,thread);
+                    login.run();
                     this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Failed to register");
                 }
-            } catch (IOException io) {
+                else
+                    JOptionPane.showMessageDialog(null, "Failed to register");
+            } catch (IOException | InterruptedException io) {
                 System.out.println("Close GUI");
             }
         }
