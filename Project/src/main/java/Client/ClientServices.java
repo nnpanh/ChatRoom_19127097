@@ -67,6 +67,15 @@ public class ClientServices{
                 ChatRoom();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
+            }
+            finally {
+                //Tell server to close
+                output.write("quit");
+                output.newLine();
+                output.flush();
+                //Close
+                input.close();
+                output.close();
                 clientSocket.close();
             }
         }

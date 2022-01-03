@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 
 public class ClientMain {
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
         Socket clientSocket = new Socket("localhost", 8001);
         if (clientSocket.isConnected()) {

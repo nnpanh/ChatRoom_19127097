@@ -163,7 +163,7 @@ public class ServerServices extends Thread {
                       case "login" -> handleLogin(token[1],token[2]);
                       case "register" -> handleRegister(token[1], token[2], token[3]);
                       case "message" -> {
-                          if (token.length==4) token[2]+=token[3];
+                          if (token.length==4) token[2] = token[2]+" "+token[3];
                           handleMessage(token[1],token[2]);
                       }
                       case "load" -> handleLoad();
@@ -172,10 +172,18 @@ public class ServerServices extends Thread {
               }
           }
           while (true);
-          input.close();
-          output.close();
+
       } catch (IOException e) {
-            e.printStackTrace();
+          try {
+              System.out.println("Client has closed");
+              server.remove(this);
+              socket.close();
+              input.close();
+              output.close();
+          } catch (IOException ex) {
+              //ex.printStackTrace();
+          }
+          //e.printStackTrace();
         }
     }
 
@@ -194,7 +202,7 @@ public class ServerServices extends Thread {
         output.write(String.valueOf(onlineUser.size()));
         output.newLine();
         output.flush();
-        System.out.println(String.valueOf(onlineUser.size()));
+
         for (int i=0;i<onlineUser.size();i++) {
             output.write(onlineUser.get(i));
             output.newLine();

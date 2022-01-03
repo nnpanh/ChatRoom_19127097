@@ -44,6 +44,7 @@ public class ChatRoom extends  JFrame{
                     list.setListData(onlineUser.toArray());
                 }
                 else if (msg[0].equals("message")){
+                    list.setSelectedValue(msg[1],true);
                     taChat.append(msg[1]+": "+msg[2]+"\n");
                 }
 
@@ -60,17 +61,17 @@ public class ChatRoom extends  JFrame{
         JPanel pnScroll = new JPanel();
         JLabel lbUser = new JLabel("   List of online users:   ");
         lbUser.setFont(new Font("Serif", Font.BOLD, 18));
-        lbUser.setBackground(new Color(231, 255, 255));
+        lbUser.setBackground(new Color(135, 206, 235));
         list = new JList<>(onlineUser.toArray());
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(list);
-        scrollPane.setBackground(new Color(231, 255, 255));
+        scrollPane.setBackground(new Color(135, 206, 235));
         scrollPane.setBorder(new EmptyBorder(10,10,10,10));
         list.setLayoutOrientation(JList.VERTICAL);
         pnScroll.setLayout(new BorderLayout());
         pnScroll.add(lbUser,BorderLayout.NORTH);
         pnScroll.add(scrollPane,BorderLayout.CENTER);
-        pnScroll.setBackground(new Color(231, 255, 255));
+        pnScroll.setBackground(new Color(135, 206, 235));
         pnScroll.setBorder(new EmptyBorder(0,0,0,0));
 
         //Chatbox
@@ -78,6 +79,7 @@ public class ChatRoom extends  JFrame{
         taChat.setFont(new Font("Serif",Font.PLAIN,14));
         taChat.setEditable(false);
         taChat.setLineWrap(true);
+        taChat.setBorder(BorderFactory.createLineBorder(Color.black,1,true));
         pnForm.add(taChat,BorderLayout.CENTER);
 
         //Text input
@@ -89,9 +91,20 @@ public class ChatRoom extends  JFrame{
         pnChat.add(tfInput);
         pnChat.add(btnSend);
         pnChat.add(btnFile);
-        pnChat.setBackground(new Color(231, 255, 255));
+        pnChat.setBackground(new Color(135, 206, 235));
         pnForm.add(pnChat,BorderLayout.SOUTH);
 
+        //Space
+        JPanel pnSpace = new JPanel();
+        pnSpace.setBackground(new Color(135, 206, 235));
+        JPanel pnSpace1 = new JPanel();
+        pnSpace1.setBackground(new Color(135, 206, 235));
+        JPanel pnSpace2 = new JPanel();
+        pnSpace2.setBackground(new Color(135, 206, 235));
+        pnForm.add(pnSpace,BorderLayout.WEST);
+        pnForm.add(pnSpace1,BorderLayout.EAST);
+        pnForm.add(pnSpace2,BorderLayout.NORTH);
+        pnForm.setBackground(new Color(135, 206, 235));
 
         //Title
         JPanel pnTitle = new JPanel();
@@ -127,7 +140,7 @@ public class ChatRoom extends  JFrame{
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-            taChat.append(tfInput.getText()+"\n");
+            taChat.append(username+" (Me): "+tfInput.getText()+"\n");
         });
         btnFile.addActionListener(e->{
             JFileChooser fileChooser = new JFileChooser();
@@ -140,6 +153,9 @@ public class ChatRoom extends  JFrame{
                 } else {
                     System.out.println("File already opened");
                 }
+        });
+        list.addListSelectionListener(e -> {
+            taChat.setText(null);
         });
     }
 }

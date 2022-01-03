@@ -3,6 +3,8 @@ package Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 
@@ -37,16 +39,23 @@ public class Server {
                 socket = server.accept();
 
                 System.out.println("A new client connected : " + socket + "\n");
-                // create a new thread object
+                //Create a new thread object
                 ServerServices ClientHandler = new ServerServices(this, socket);
                 clients.add(ClientHandler);
                 ClientHandler.start();
                 //Add to pool thread
-               // pool.execute(ClientHandler);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                if (socket != null)
+                    socket.close();
+                if (!server.isClosed()) server.close();
+                System.out.println("[" + LocalDate.now() + " " + LocalDateTime.now().getHour() + ":" + LocalDateTime.now().getMinute() + ":" + LocalDateTime.now().getSecond()
+                        + "] Connection closed: " + socket);
             }
         }
+    }
+
+    public void remove(ServerServices serverServices) {
+        clients.remove(serverServices);
     }
 }
