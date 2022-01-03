@@ -128,6 +128,8 @@ public class SignUp extends JFrame {
                 if (value.equals("true")) {
                     JOptionPane.showMessageDialog(null, "Register successfully");
                     this.setVisible(false);
+                    File newFolder = new File("Project/resource/Client/"+tfUsername.getText());
+                    if (newFolder.mkdirs()) System.out.println("Directory created");;
                     Login login = new Login(services,thread);
                     login.run();
                     this.dispose();

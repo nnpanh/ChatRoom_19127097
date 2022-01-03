@@ -11,8 +11,8 @@ public class ServerServices extends Thread {
     private final BufferedReader input;
     private final BufferedWriter output;
     private final Socket socket;
-    private String username;
-    private  Server server;
+    private String username=null;
+    private final Server server;
     private final HashMap<String, String> accounts;
 
     // Constructor
@@ -37,13 +37,15 @@ public class ServerServices extends Thread {
         System.out.println("Client logins");
         username=user;
             boolean loginFlag = false;
-            for (ServerServices client: server.getClients()
+            for (String otherClients: server.getOnlineUser(this)
             ) {
-                if (client!=this&&client.getLogin().equals(username)){
+                System.out.println("1:"+otherClients);
+                if (otherClients.equals(username)){
                     output.write("logged");
                     output.newLine();
                     output.flush();
                     loginFlag=true;
+                    System.out.println("Client already logged");
                 }
             }
             if (!loginFlag) {
@@ -52,20 +54,20 @@ public class ServerServices extends Thread {
                     output.write("true");
                     output.newLine();
                     output.flush();
+                    System.out.println("Client login successfully");
                     //Notify other clients:
                     for (ServerServices clients: server.getClients()
                          ) {
-                        if (clients!=this)
+                        if (clients!=this&&clients.getLogin()!=null)
                             clients.sendMessage("new "+username);
                     }
                 } else {
                     output.write("false");
                     output.newLine();
                     output.flush();
+                    System.out.println("Client login failed");
                 }
             }
-
-        System.out.println("User: " + username + " logins successfully!");
 
     }
 
@@ -151,13 +153,7 @@ public class ServerServices extends Thread {
           {
               receivedMessage=input.readLine();
               System.out.println("Received : " + receivedMessage);
-              if (receivedMessage.equalsIgnoreCase("quit"))
-              {
-                  System.out.println("Client has left !");
-                  break;
-              }
-              else
-              {
+
                   String[] token = receivedMessage.split(" ",4);
                   switch (token[0]) {
                       case "login" -> handleLogin(token[1],token[2]);
@@ -167,8 +163,9 @@ public class ServerServices extends Thread {
                           handleMessage(token[1],token[2]);
                       }
                       case "load" -> handleLoad();
+                      case "file" -> handleFile(token[1],token[2]);
                       default -> System.out.println(token[0]);
-                  }
+
               }
           }
           while (true);
@@ -181,9 +178,8 @@ public class ServerServices extends Thread {
               input.close();
               output.close();
           } catch (IOException ex) {
-              //ex.printStackTrace();
+              ex.printStackTrace();
           }
-          //e.printStackTrace();
         }
     }
 
@@ -198,20 +194,51 @@ public class ServerServices extends Thread {
 
     private void handleLoad() throws IOException {
         //Send number of current online user
-        ArrayList<String> onlineUser = server.getOnlineUser();
+        ArrayList<String> onlineUser = server.getOnlineUser(this);
         output.write(String.valueOf(onlineUser.size()));
         output.newLine();
         output.flush();
 
-        for (int i=0;i<onlineUser.size();i++) {
-            output.write(onlineUser.get(i));
-            output.newLine();
-            output.flush();
+        for (String s : onlineUser) {
+            if (s!=null) {
+                output.write(s);
+                output.newLine();
+                output.flush();
+            }
         }
     }
     private void sendMessage(String message) throws IOException {
         output.write(message);
         output.newLine();
         output.flush();
+    }
+    private void handleFile(String sendTo, String fileSize) throws IOException {
+        for (ServerServices otherClient: server.getClients()
+        ) {
+            if (otherClient.getLogin().equals(sendTo))
+                otherClient.sendFile(fileSize);
+
+        }
+    }
+
+    private void sendFile(String fileSize) throws IOException {
+        System.out.println("Saving files");
+        byte [] arrayToByte  = new byte [Integer.parseInt(fileSize)+1];
+        InputStream inputStream = socket.getInputStream();
+        FileOutputStream fileOutputStream = new FileOutputStream("Project/resource/temp/file.txt");
+        BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
+        int byteRead = inputStream.read(arrayToByte,0,arrayToByte.length);
+        int count = byteRead;
+
+        do {
+            byteRead =
+                    inputStream.read(arrayToByte, count, (arrayToByte.length-count));
+            if(byteRead >= 0) count += byteRead;
+        } while(byteRead > -1);
+
+        bos.write(arrayToByte, 0 , count);
+        bos.flush();
+        System.out.println("File "
+                + " downloaded");
     }
 }

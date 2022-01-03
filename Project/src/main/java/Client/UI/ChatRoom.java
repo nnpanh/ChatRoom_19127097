@@ -22,12 +22,13 @@ public class ChatRoom extends  JFrame{
         this.username=username;
         this.services=services;
         this.setTitle("Chat Room | Connect");
-        this.setSize(new Dimension(800, 800));
+        this.setSize(new Dimension(900, 800));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         lbTitle = new JLabel("CHAT ROOM - "+username);
         onlineUser = services.otherClients;
         addComponents();
+        if(onlineUser.size()>0) list.setSelectedIndex(0);
     }
 
     public void run() throws IOException {
@@ -147,9 +148,15 @@ public class ChatRoom extends  JFrame{
                 int returnVal = fileChooser.showOpenDialog(this);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    String sendTo = list.getSelectedValue().toString();
                     File file = fileChooser.getSelectedFile();
                     //This is where a real application would open the file.
-                    System.out.println("Opening: " + file.getName() + ".");
+                    System.out.println("Sending: " + file.getName() + ".");
+                    try {
+                        services.sendFile(file,sendTo);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 } else {
                     System.out.println("File already opened");
                 }

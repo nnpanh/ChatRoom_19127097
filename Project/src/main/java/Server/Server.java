@@ -16,10 +16,11 @@ public class Server {
         return clients;
     }
 
-    public ArrayList<String> getOnlineUser(){
+    public ArrayList<String> getOnlineUser(ServerServices owner){
         ArrayList<String> user = new ArrayList<>();
         for (ServerServices client: clients
              ) {
+            if(client.getLogin()!=null && client!=owner)
             user.add(client.getLogin());
         }
         return user;

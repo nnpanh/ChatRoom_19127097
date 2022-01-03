@@ -99,4 +99,19 @@ public class ClientServices{
         output.newLine();
         output.flush();
     }
+
+    public void sendFile(File file, String sendTo) throws IOException {
+        output.write("file "+sendTo+" "+file.length());
+        output.newLine();
+        output.flush();
+
+        byte [] fileToByte  = new byte [(int)file.length()];
+        FileInputStream fileInputStream = new FileInputStream(file);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        bufferedInputStream.read(fileToByte,0,fileToByte.length);
+        OutputStream outputStream = clientSocket.getOutputStream();
+        System.out.println("Sending " + file.getName() + "(" + fileToByte.length + " bytes)");
+        outputStream.write(fileToByte,0,fileToByte.length);
+        outputStream.flush();
+    }
 }
