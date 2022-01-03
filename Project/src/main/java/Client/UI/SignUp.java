@@ -1,5 +1,7 @@
 package Client.UI;
 
+import Client.ClientServices;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -7,10 +9,10 @@ import java.io.*;
 import java.net.Socket;
 
 public class SignUp extends JFrame {
-    private BufferedWriter output;
-    private BufferedReader input;
-    private Socket socket;
-    private Thread thread;
+    private final BufferedWriter output;
+    private final BufferedReader input;
+    private final ClientServices services;
+    private final Thread thread;
     private final JLabel lbUsername = new JLabel("Username");
     private final JLabel lbPassword = new JLabel("Password");
     private final JLabel lbConfirm = new JLabel("Confirm");
@@ -23,10 +25,10 @@ public class SignUp extends JFrame {
 
     private final JButton btnSignUp = new JButton("Create");
 
-    public SignUp(Socket socket, Thread t) throws IOException {
-        this.socket=socket;
-        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+    public SignUp(ClientServices services, Thread t) throws IOException {
+        this.services = services;
+        input = services.input;
+        output = services.output;
         thread=t;
         this.setTitle("Chat Room | Sign Up");
         this.setSize(new Dimension(500, 400));
@@ -126,7 +128,7 @@ public class SignUp extends JFrame {
                 if (value.equals("true")) {
                     JOptionPane.showMessageDialog(null, "Register successfully");
                     this.setVisible(false);
-                    Login login = new Login(socket,thread);
+                    Login login = new Login(services,thread);
                     login.run();
                     this.dispose();
                 }

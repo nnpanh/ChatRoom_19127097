@@ -1,5 +1,7 @@
 package Client.UI;
 
+import Client.ClientServices;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -15,16 +17,16 @@ public class Login extends JFrame {
     private final JTextField tfUsername = new JTextField("guest", 15);
     private final JPasswordField tfPassword = new JPasswordField("123", 15);
     private final JButton btnLogin = new JButton("Login");
-    private Socket socket = null;
     private BufferedReader input = null;
     private BufferedWriter output = null;
+    private ClientServices services;
     private final Thread thread;
 
-    public Login(Socket socket,Thread t) throws IOException {
-        this.socket = socket;
+    public Login(ClientServices services, Thread t) throws IOException {
         thread = t;
-        input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.services = services;
+        input = services.input;
+        output = services.output;
         addComponents();
         this.setTitle("Chat Room | Login");
         this.setSize(new Dimension(400, 350));
@@ -119,6 +121,7 @@ public class Login extends JFrame {
                 if (LoginSuccess) {
                     JOptionPane.showMessageDialog(null, "Login successfully");
                     this.setVisible(false);
+                    services.setUsername(tfUsername.getText());
                     synchronized (thread){
                         thread.notifyAll();
                     }

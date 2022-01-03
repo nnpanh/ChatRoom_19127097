@@ -52,6 +52,12 @@ public class ServerServices extends Thread {
                     output.write("true");
                     output.newLine();
                     output.flush();
+                    //Notify other clients:
+                    for (ServerServices clients: server.getClients()
+                         ) {
+                        if (clients!=this)
+                            clients.sendMessage("new "+username);
+                    }
                 } else {
                     output.write("false");
                     output.newLine();
@@ -156,7 +162,10 @@ public class ServerServices extends Thread {
                   switch (token[0]) {
                       case "login" -> handleLogin(token[1],token[2]);
                       case "register" -> handleRegister(token[1], token[2], token[3]);
-                      case "message" -> System.out.println("Chat room start");
+                      case "message" -> {
+                          if (token.length==4) token[2]+=token[3];
+                          handleMessage(token[1],token[2]);
+                      }
                       case "load" -> handleLoad();
                       default -> System.out.println(token[0]);
                   }
@@ -167,6 +176,15 @@ public class ServerServices extends Thread {
           output.close();
       } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleMessage(String sendTo, String message) throws IOException {
+        for (ServerServices otherClient: server.getClients()
+             ) {
+            if (otherClient.getLogin().equals(sendTo)){
+                otherClient.sendMessage("message "+username+" "+message);
+            }
         }
     }
 
@@ -183,6 +201,9 @@ public class ServerServices extends Thread {
             output.flush();
         }
     }
-
-
+    private void sendMessage(String message) throws IOException {
+        output.write(message);
+        output.newLine();
+        output.flush();
+    }
 }

@@ -5,35 +5,51 @@ import Client.ClientServices;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
 public class ChatRoom extends  JFrame{
-
-    private Socket socket = null;
-    private DataOutputStream output = null;
-    private DataInputStream input = null;
     private ArrayList<String> onlineUser;
     private ClientServices services;
-    private final JLabel lbTitle = new JLabel("CHAT ROOM");
+    private String username;
+    private final JLabel lbTitle;
     private final JLabel lbFooter = new JLabel("HCMUS-CLC-19KTPM3-Introduction to Java-19127097");
+    private JTextArea taChat = new JTextArea();
+    private JList<Object> list;
 
-    // public SignUp(Socket socket) throws IOException {
-    public ChatRoom(ClientServices services) {
+    public ChatRoom(ClientServices services, String username) {
+        this.username=username;
         this.services=services;
         this.setTitle("Chat Room | Connect");
         this.setSize(new Dimension(800, 800));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
+        lbTitle = new JLabel("CHAT ROOM - "+username);
         onlineUser = services.otherClients;
         addComponents();
     }
 
-    public void run() {
+    public void run() throws IOException {
         this.setVisible(true);
+        String receivedMessage;
+        BufferedReader reader = services.input;
+        do{
+            receivedMessage = reader.readLine();
+            System.out.println(receivedMessage);
+            if (!receivedMessage.equals("quit")) {
+                String[] msg = receivedMessage.split(" ",3);
+                if (msg[0].equals("new")) {
+                    onlineUser.add(msg[1]);
+                    list.setListData(onlineUser.toArray());
+                }
+                else if (msg[0].equals("message")){
+                    taChat.append(msg[1]+": "+msg[2]+"\n");
+                }
+
+            }
+
+        } while (!receivedMessage.equals("quit"));
 
     }
     public void addComponents() {
@@ -45,7 +61,7 @@ public class ChatRoom extends  JFrame{
         JLabel lbUser = new JLabel("   List of online users:   ");
         lbUser.setFont(new Font("Serif", Font.BOLD, 18));
         lbUser.setBackground(new Color(231, 255, 255));
-        JList<Object> list = new JList<>(onlineUser.toArray());
+        list = new JList<>(onlineUser.toArray());
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setViewportView(list);
         scrollPane.setBackground(new Color(231, 255, 255));
@@ -58,7 +74,6 @@ public class ChatRoom extends  JFrame{
         pnScroll.setBorder(new EmptyBorder(0,0,0,0));
 
         //Chatbox
-        JTextArea taChat = new JTextArea();
         taChat.setMargin(new Insets(20,20,20,20));
         taChat.setFont(new Font("Serif",Font.PLAIN,14));
         taChat.setEditable(false);
@@ -106,6 +121,12 @@ public class ChatRoom extends  JFrame{
 
         //Action listener
         btnSend.addActionListener(e -> {
+            String sendTo = list.getSelectedValue().toString();
+            try {
+                services.sendMessage(tfInput.getText(),sendTo);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             taChat.append(tfInput.getText()+"\n");
         });
         btnFile.addActionListener(e->{

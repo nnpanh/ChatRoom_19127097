@@ -11,8 +11,14 @@ import java.util.Scanner;
 public class ClientServices{
     public Thread t;
     private final Socket clientSocket;
-    private final BufferedReader input;
-    private final BufferedWriter output;
+    public final BufferedReader input;
+    public final BufferedWriter output;
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    private String username;
     public ArrayList<String> otherClients = new ArrayList<>();
     public ClientServices(Socket socket) throws IOException {
         this.clientSocket = socket;
@@ -21,12 +27,12 @@ public class ClientServices{
     }
 
     public void signInForm() throws InterruptedException, IOException {
-        Menu menu = new Menu(clientSocket,t);
+        Menu menu = new Menu(this,t);
         menu.run();
     }
 
     public void ChatRoom() throws IOException {
-        ChatRoom chatRoom = new ChatRoom(this);
+        ChatRoom chatRoom = new ChatRoom(this,username);
         chatRoom.run();
         do
         {
@@ -51,17 +57,17 @@ public class ClientServices{
         while(true);
     }
 
-    public void run() {
+    public void run() throws IOException {
         t = new Thread();
         synchronized (t) {
             try {
                 signInForm();
                 t.wait();
                 loadData();
-                //t.wait();
                 ChatRoom();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
+                clientSocket.close();
             }
         }
     }
@@ -77,8 +83,11 @@ public class ClientServices{
             receivedMessage = input.readLine();
             otherClients.add(receivedMessage);
         }
-        synchronized (t){
-          //  t.notifyAll();
-        }
+    }
+
+    public void sendMessage(String text, String user) throws IOException {
+        output.write("message "+user+" "+text);
+        output.newLine();
+        output.flush();
     }
 }

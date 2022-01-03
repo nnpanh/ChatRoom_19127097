@@ -1,5 +1,7 @@
 package Client.UI;
 
+import Client.ClientServices;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -7,13 +9,11 @@ import java.net.Socket;
 
 public class Menu extends JFrame {
     private Thread thread;
-    private Socket socket;
-    private BufferedWriter output;
-    public  Menu(Socket socket,Thread t) throws IOException {
+    private ClientServices services;
+    public  Menu(ClientServices services,Thread t) throws IOException {
         super("Pick one");
         thread = t;
-        this.socket=socket;
-        output= new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.services = services;
         addComponents();
     }
     public void addComponents() throws IOException {
@@ -69,7 +69,7 @@ public class Menu extends JFrame {
     }
     private void NewAccountPerformed(java.awt.event.ActionEvent evt) throws IOException, InterruptedException {
         this.setVisible(false);
-        SignUp signUp = new SignUp(socket,thread);
+        SignUp signUp = new SignUp(services,thread);
         signUp.run();
         this.dispose();
 
@@ -77,7 +77,7 @@ public class Menu extends JFrame {
 
     private void LoginActionPerformed(java.awt.event.ActionEvent evt) throws IOException, InterruptedException {
         this.setVisible(false);
-        Login login = new Login(socket,thread);
+        Login login = new Login(services,thread);
         login.run();
         this.dispose();
     }
