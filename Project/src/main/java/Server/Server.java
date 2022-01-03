@@ -8,12 +8,20 @@ import java.util.ArrayList;
 
 public class Server {
     final ServerSocket server;
+    private ArrayList<ServerServices> clients = new ArrayList<>();
 
     public ArrayList<ServerServices> getClients() {
         return clients;
     }
 
-    private ArrayList<ServerServices> clients = new ArrayList<>();
+    public ArrayList<String> getOnlineUser(){
+        ArrayList<String> user = new ArrayList<>();
+        for (ServerServices client: clients
+             ) {
+            user.add(client.getLogin());
+        }
+        return user;
+    }
 
     //Establish a connection between server and clients
     public Server(int port) throws IOException {

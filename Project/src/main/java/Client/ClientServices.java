@@ -1,8 +1,7 @@
 package Client;
 
-import Client.UI.Login;
+import Client.UI.ChatRoom;
 import Client.UI.Menu;
-import Client.UI.SignUp;
 
 import java.io.*;
 import java.net.Socket;
@@ -14,19 +13,21 @@ public class ClientServices{
     private final Socket clientSocket;
     private final BufferedReader input;
     private final BufferedWriter output;
-    private ArrayList<String> otherClients;
+    public ArrayList<String> otherClients = new ArrayList<>();
     public ClientServices(Socket socket) throws IOException {
         this.clientSocket = socket;
         input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         output = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
     }
 
-    public void Menu() throws InterruptedException, IOException {
+    public void signInForm() throws InterruptedException, IOException {
         Menu menu = new Menu(clientSocket,t);
         menu.run();
     }
 
     public void ChatRoom() throws IOException {
+        ChatRoom chatRoom = new ChatRoom(this);
+        chatRoom.run();
         do
         {
             System.out.println("Welcome");
@@ -52,13 +53,32 @@ public class ClientServices{
 
     public void run() {
         t = new Thread();
-        try {
-            Menu();
-            t.suspend();
-            ChatRoom();
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
+        synchronized (t) {
+            try {
+                signInForm();
+                t.wait();
+                loadData();
+                //t.wait();
+                ChatRoom();
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
 
+    private void loadData() throws IOException {
+        output.write("load");
+        output.newLine();
+        output.flush();
+        String receivedMessage = input.readLine();
+        System.out.println(receivedMessage);
+        int users = Integer.parseInt(receivedMessage);
+        for(int i=0;i<users;i++){
+            receivedMessage = input.readLine();
+            otherClients.add(receivedMessage);
+        }
+        synchronized (t){
+          //  t.notifyAll();
+        }
     }
 }

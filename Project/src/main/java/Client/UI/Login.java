@@ -18,7 +18,7 @@ public class Login extends JFrame {
     private Socket socket = null;
     private BufferedReader input = null;
     private BufferedWriter output = null;
-    private Thread thread;
+    private final Thread thread;
 
     public Login(Socket socket,Thread t) throws IOException {
         this.socket = socket;
@@ -119,7 +119,9 @@ public class Login extends JFrame {
                 if (LoginSuccess) {
                     JOptionPane.showMessageDialog(null, "Login successfully");
                     this.setVisible(false);
-                    thread.resume();
+                    synchronized (thread){
+                        thread.notifyAll();
+                    }
                     this.dispose();
                 } else if (value.equals("false")){
                     JOptionPane.showMessageDialog(null, "Login fail: Wrong username/password");

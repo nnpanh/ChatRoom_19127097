@@ -3,6 +3,7 @@ package Server;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
@@ -32,8 +33,9 @@ public class ServerServices extends Thread {
         return username;
     }
 
-    private void loginAccount(String username, String password) throws IOException {
+    private void handleLogin(String user,String password) throws IOException {
         System.out.println("Client logins");
+        username=user;
             boolean loginFlag = false;
             for (ServerServices client: server.getClients()
             ) {
@@ -58,10 +60,10 @@ public class ServerServices extends Thread {
             }
 
         System.out.println("User: " + username + " logins successfully!");
-        //Clients.add(username);
+
     }
 
-    private void registerNewAccount(String username, String password, String confirm) throws IOException {
+    private void handleRegister(String username, String password, String confirm) throws IOException {
         System.out.println("Client registers ");
             if (!password.equals(confirm)) {
                 System.out.println("Failed to register - confirm");
@@ -150,20 +152,12 @@ public class ServerServices extends Thread {
               }
               else
               {
-                  /*Scanner scanner = new Scanner(System.in);
-                  String k=scanner.nextLine();
-                  output.write(k);
-                  output.newLine();
-                  output.flush();
-                  */
                   String[] token = receivedMessage.split(" ",4);
                   switch (token[0]) {
-                      case "login" -> {
-                          username=token[1];
-                          loginAccount(token[1], token[2]);
-                      }
-                      case "register" -> registerNewAccount(token[1], token[2], token[3]);
+                      case "login" -> handleLogin(token[1],token[2]);
+                      case "register" -> handleRegister(token[1], token[2], token[3]);
                       case "message" -> System.out.println("Chat room start");
+                      case "load" -> handleLoad();
                       default -> System.out.println(token[0]);
                   }
               }
@@ -173,6 +167,20 @@ public class ServerServices extends Thread {
           output.close();
       } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleLoad() throws IOException {
+        //Send number of current online user
+        ArrayList<String> onlineUser = server.getOnlineUser();
+        output.write(String.valueOf(onlineUser.size()));
+        output.newLine();
+        output.flush();
+        System.out.println(String.valueOf(onlineUser.size()));
+        for (int i=0;i<onlineUser.size();i++) {
+            output.write(onlineUser.get(i));
+            output.newLine();
+            output.flush();
         }
     }
 

@@ -1,5 +1,7 @@
 package Client.UI;
 
+import Client.ClientServices;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -15,30 +17,21 @@ public class ChatRoom extends  JFrame{
     private DataOutputStream output = null;
     private DataInputStream input = null;
     private ArrayList<String> onlineUser;
-
+    private ClientServices services;
     private final JLabel lbTitle = new JLabel("CHAT ROOM");
     private final JLabel lbFooter = new JLabel("HCMUS-CLC-19KTPM3-Introduction to Java-19127097");
 
     // public SignUp(Socket socket) throws IOException {
-    public ChatRoom() {
-        //this.socket=socket;
-        //output = new DataOutputStream(socket.getOutputStream());
-        //input = new DataInputStream(socket.getInputStream());
-
+    public ChatRoom(ClientServices services) {
+        this.services=services;
         this.setTitle("Chat Room | Connect");
         this.setSize(new Dimension(800, 800));
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
-        onlineUser= new ArrayList<>();
-        for (int i=0;i<10;i++)
-        onlineUser.add("Player1");
+        onlineUser = services.otherClients;
         addComponents();
     }
-    public void waitForInputs() throws InterruptedException {
-        synchronized (this) {
-            wait();
-        }
-    }
+
     public void run() {
         this.setVisible(true);
 
@@ -124,14 +117,9 @@ public class ChatRoom extends  JFrame{
                     //This is where a real application would open the file.
                     System.out.println("Opening: " + file.getName() + ".");
                 } else {
-                    System.out.println("File already opended");
+                    System.out.println("File already opened");
                 }
         });
-    }
-
-    public static void main(String[] args) {
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.run();
     }
 }
 
