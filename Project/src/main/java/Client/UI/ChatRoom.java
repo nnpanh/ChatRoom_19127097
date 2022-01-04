@@ -6,16 +6,15 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.*;
-import java.net.Socket;
 import java.util.ArrayList;
 
 public class ChatRoom extends  JFrame{
-    private ArrayList<String> onlineUser;
-    private ClientServices services;
-    private String username;
+    private final ArrayList<String> onlineUser;
+    private final ClientServices services;
+    private final String username;
     private final JLabel lbTitle;
     private final JLabel lbFooter = new JLabel("HCMUS-CLC-19KTPM3-Introduction to Java-19127097");
-    private JTextArea taChat = new JTextArea();
+    private final JTextArea taChat = new JTextArea();
     private JList<Object> list;
 
     public ChatRoom(ClientServices services, String username) {
@@ -31,22 +30,32 @@ public class ChatRoom extends  JFrame{
         if(onlineUser.size()>0) list.setSelectedIndex(0);
     }
 
-    public void run() throws IOException {
+    public void run() throws IOException, InterruptedException {
         this.setVisible(true);
         String receivedMessage;
         BufferedReader reader = services.input;
         do{
             receivedMessage = reader.readLine();
             System.out.println(receivedMessage);
+            if (receivedMessage==null) continue;
             if (!receivedMessage.equals("quit")) {
                 String[] msg = receivedMessage.split(" ",3);
-                if (msg[0].equals("new")) {
-                    onlineUser.add(msg[1]);
-                    list.setListData(onlineUser.toArray());
-                }
-                else if (msg[0].equals("message")){
-                    list.setSelectedValue(msg[1],true);
-                    taChat.append(msg[1]+": "+msg[2]+"\n");
+                switch (msg[0]) {
+                    case "new" -> {
+                        onlineUser.add(msg[1]);
+                        list.setListData(onlineUser.toArray());
+                    }
+                    case "message" -> {
+                        list.setSelectedValue(msg[1], true);
+                        taChat.append(msg[1] + ": " + msg[2] + "\n");
+                    }
+                    case "file" -> {
+                        synchronized (services.t){
+                            services.receivedFile(msg[1], msg[2]);
+                            (services.t).wait();
+                        }
+
+                    }
                 }
 
             }
@@ -151,9 +160,13 @@ public class ChatRoom extends  JFrame{
                     String sendTo = list.getSelectedValue().toString();
                     File file = fileChooser.getSelectedFile();
                     //This is where a real application would open the file.
-                    System.out.println("Sending: " + file.getName() + ".");
                     try {
-                        services.sendFile(file,sendTo);
+
+                            services.sendFile(file,sendTo);
+                            System.out.println("File sent to "+sendTo);
+
+
+
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }

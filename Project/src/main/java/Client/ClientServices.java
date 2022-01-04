@@ -2,6 +2,7 @@ package Client;
 
 import Client.UI.ChatRoom;
 import Client.UI.Menu;
+import com.sun.security.jgss.GSSUtil;
 
 import java.io.*;
 import java.net.Socket;
@@ -31,30 +32,9 @@ public class ClientServices{
         menu.run();
     }
 
-    public void ChatRoom() throws IOException {
+    public void ChatRoom() throws IOException, InterruptedException {
         ChatRoom chatRoom = new ChatRoom(this,username);
         chatRoom.run();
-        do
-        {
-            System.out.println("Welcome");
-            String sentMessage;
-            String receivedMessage;
-            Scanner scanner = new Scanner(System.in);
-            sentMessage=scanner.nextLine();
-            output.write(sentMessage);
-            output.newLine();
-            output.flush();
-
-            if (sentMessage.equalsIgnoreCase("quit"))
-                break;
-            else
-            {
-                receivedMessage=input.readLine();
-                System.out.println("Received : " + receivedMessage);
-            }
-
-        }
-        while(true);
     }
 
     public void run() throws IOException {
@@ -101,17 +81,48 @@ public class ClientServices{
     }
 
     public void sendFile(File file, String sendTo) throws IOException {
-        output.write("file "+sendTo+" "+file.length());
+        output.write("file "+sendTo+" "+file.length()+" "+file.getName());
         output.newLine();
         output.flush();
 
-        byte [] fileToByte  = new byte [(int)file.length()];
         FileInputStream fileInputStream = new FileInputStream(file);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        bufferedInputStream.read(fileToByte,0,fileToByte.length);
         OutputStream outputStream = clientSocket.getOutputStream();
-        System.out.println("Sending " + file.getName() + "(" + fileToByte.length + " bytes)");
-        outputStream.write(fileToByte,0,fileToByte.length);
-        outputStream.flush();
+        // break file into chunks
+        byte[] buffer = new byte[4 * 1024];
+        int bytes;
+        while ((bytes = fileInputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytes);
+            outputStream.flush();
+        }
+        fileInputStream.close();
+
+    }
+
+    public void receivedFile(String fileSize, String fileName) throws IOException {
+        System.out.println("Receiving files");
+
+        int bytes = 0;
+        File file;
+        File folder = new File("Project/resource/Client/" + username+"/");
+        if (!folder.isDirectory()){
+            if(folder.mkdirs())
+            System.out.println("Folder created");
+        }
+        file = new File("Project/resource/Client/" + username+"/"+fileName);
+
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
+        InputStream inputStream = clientSocket.getInputStream();
+        long size = Long.parseLong(fileSize);
+
+        byte[] buffer = new byte[4 * 1024];
+        while (size > 0 && (bytes = inputStream.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+            fileOutputStream.write(buffer, 0, bytes);
+            size -= bytes;      // read upto file size
+        }
+        fileOutputStream.close();
+        System.out.println("File received from server");
+        synchronized (t) {
+            t.notifyAll();
+        }
     }
 }
