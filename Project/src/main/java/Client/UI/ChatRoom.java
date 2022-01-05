@@ -21,13 +21,14 @@ public class ChatRoom extends  JFrame{
         this.username=username;
         this.services=services;
         this.setTitle("Chat Room | Connect");
-        this.setSize(new Dimension(900, 800));
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setSize(new Dimension(900, 600));
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.setLocationRelativeTo(null);
         lbTitle = new JLabel("CHAT ROOM - "+username);
         onlineUser = services.otherClients;
         addComponents();
         if(onlineUser.size()>0) list.setSelectedIndex(0);
+
     }
 
     public void run() throws IOException, InterruptedException {
@@ -38,8 +39,8 @@ public class ChatRoom extends  JFrame{
             receivedMessage = reader.readLine();
             System.out.println(receivedMessage);
             if (receivedMessage==null) continue;
-            if (!receivedMessage.equals("quit")) {
-                String[] msg = receivedMessage.split(" ",3);
+            if (!receivedMessage.equals("close")) {
+                String[] msg = receivedMessage.split(" ",4);
                 switch (msg[0]) {
                     case "new" -> {
                         onlineUser.add(msg[1]);
@@ -51,16 +52,23 @@ public class ChatRoom extends  JFrame{
                     }
                     case "file" -> {
                         synchronized (services.t){
+                            list.setSelectedValue(msg[3],true);
+                            if (list.getSelectedValue().equals(msg[3]))
+                            taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
+                            else taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
                             services.receivedFile(msg[1], msg[2]);
                             (services.t).wait();
                         }
-
+                    }
+                    case "quit" ->{
+                        onlineUser.remove(msg[1]);
+                        list.setListData(onlineUser.toArray());
                     }
                 }
 
             }
 
-        } while (!receivedMessage.equals("quit"));
+        } while (!receivedMessage.equals("close"));
 
     }
     public void addComponents() {
@@ -164,6 +172,7 @@ public class ChatRoom extends  JFrame{
 
                             services.sendFile(file,sendTo);
                             System.out.println("File sent to "+sendTo);
+                            taChat.append("Sent "+file.getName()+" to "+sendTo+"\n");
 
 
 
