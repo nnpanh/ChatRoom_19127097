@@ -59,20 +59,24 @@ public class ClientServices{
                 ChatRoom();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
+            } finally {
+                disconnect();
             }
         }
     }
 
     public void disconnect() throws IOException {
-        System.out.println("Client closed");
-        //Tell server to close
-        output.write("quit");
-        output.newLine();
-        output.flush();
-        //Close
-        input.close();
-        output.close();
-        clientSocket.close();
+        if(!clientSocket.isClosed()) {
+            System.out.println("Client closed");
+            //Tell server to close
+            output.write("quit");
+            output.newLine();
+            output.flush();
+            //Close
+            input.close();
+            output.close();
+            clientSocket.close();
+        }
     }
 
     private void loadData() throws IOException {
@@ -109,11 +113,6 @@ public class ClientServices{
             outputStream.flush();
         }
         fileInputStream.close();
-        synchronized (t){
-            System.out.println("Sent file to another");
-            t.notifyAll();
-        }
-
     }
 
     public void receivedFile(String fileSize, String fileName) throws IOException {
@@ -138,8 +137,8 @@ public class ClientServices{
             size -= bytes;      // read upto file size
         }
         fileOutputStream.close();
+        System.out.println("File received from server");
         synchronized (t) {
-            System.out.println("File received from server");
             t.notifyAll();
         }
     }

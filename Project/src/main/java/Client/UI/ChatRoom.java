@@ -52,13 +52,13 @@ public class ChatRoom extends  JFrame{
                     }
                     case "file" -> {
                         list.setSelectedValue(msg[3],true);
+                        services.receivedFile(msg[1], msg[2]);
                         synchronized (services.t){
-                            services.receivedFile(msg[1], msg[2]);
                             (services.t).wait();
                         }
-                        if (list.getSelectedValue().equals(msg[3]))
-                            taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
-                        else taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
+                        if (list.getSelectedValue()==null || !list.getSelectedValue().equals(msg[3]))
+                            taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
+                        else taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
                     }
                     case "quit" ->{
                         onlineUser.remove(msg[1]);
@@ -68,7 +68,7 @@ public class ChatRoom extends  JFrame{
 
             }
 
-        } while (!receivedMessage.equals("close"));
+        } while (receivedMessage!=null&&!receivedMessage.equals("close"));
 
     }
     public void addComponents() {
@@ -170,14 +170,10 @@ public class ChatRoom extends  JFrame{
                     //This is where a real application would open the file.
                     try {
                         services.sendFile(file,sendTo);
-                            synchronized ((services.t)){
-                                (services.t).wait();
-                            }
                         System.out.println("File sent to "+sendTo);
                         taChat.append("Sent "+file.getName()+" to "+sendTo+"\n");
 
-
-                    } catch (IOException | InterruptedException ex) {
+                    } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 } else {

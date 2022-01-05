@@ -160,9 +160,7 @@ public class ServerServices extends Thread {
                         handleMessage(token[1], token[2]);
                     }
                     case "load" -> handleLoad();
-                    case "file" -> {
-                        handleFile(token[1], token[2], token[3]);
-                    }
+                    case "file" -> handleFile(token[1], token[2], token[3]);
                     case "quit"->{
                         handleLogOut();
                         stopFlag=true;
@@ -175,12 +173,14 @@ public class ServerServices extends Thread {
             while (!stopFlag);
 
         } catch (IOException | InterruptedException e) {
+           e.printStackTrace();
+        } finally {
             try {
                 System.out.println("Client has closed");
-                server.remove(this);
                 socket.close();
                 input.close();
                 output.close();
+                server.remove(this);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -236,13 +236,13 @@ public class ServerServices extends Thread {
             if (otherClient.getLogin().equals(sendTo)) {
                 System.out.println("Send file to " + otherClient.getLogin());
                 otherClient.sendMessage("file " + fileSize + " " + fileName +" " + username);
-                otherClient.sendFile();
+                otherClient.sendFile(username);
                 break;
             }
         }
     }
 
-    private void sendFile() throws IOException {
+    private void sendFile(String username) throws IOException {
         FileInputStream fileInputStream = new FileInputStream("Project/resource/temp/"+username);
         OutputStream outputStream = socket.getOutputStream();
         // break file into chunks
@@ -260,7 +260,8 @@ public class ServerServices extends Thread {
         System.out.println("Receiving files");
 
         int bytes = 0;
-        FileOutputStream fileOutputStream = new FileOutputStream("Project/resource/temp/" + username);
+        File file = new  File("Project/resource/temp/" + username);
+        FileOutputStream fileOutputStream = new FileOutputStream(file);
         InputStream inputStream = socket.getInputStream();
         long size = Long.parseLong(fileSize);
 
