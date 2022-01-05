@@ -12,7 +12,7 @@ import java.net.Socket;
 public class ClientMain {
     public static void main(String[] args) throws IOException {
 
-        Socket clientSocket = new Socket("localhost", 8001);
+        Socket clientSocket = new Socket("localhost", 8000);
         if (clientSocket.isConnected()) {
             ClientServices client = new ClientServices(clientSocket);
             client.run();

@@ -109,6 +109,10 @@ public class ClientServices{
             outputStream.flush();
         }
         fileInputStream.close();
+        synchronized (t){
+            System.out.println("Sent file to another");
+            t.notifyAll();
+        }
 
     }
 

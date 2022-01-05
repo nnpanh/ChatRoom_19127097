@@ -51,14 +51,14 @@ public class ChatRoom extends  JFrame{
                         taChat.append(msg[1] + ": " + msg[2] + "\n");
                     }
                     case "file" -> {
+                        list.setSelectedValue(msg[3],true);
                         synchronized (services.t){
-                            list.setSelectedValue(msg[3],true);
-                            if (list.getSelectedValue().equals(msg[3]))
-                            taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
-                            else taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
                             services.receivedFile(msg[1], msg[2]);
                             (services.t).wait();
                         }
+                        if (list.getSelectedValue().equals(msg[3]))
+                            taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
+                        else taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
                     }
                     case "quit" ->{
                         onlineUser.remove(msg[1]);
@@ -169,14 +169,15 @@ public class ChatRoom extends  JFrame{
                     File file = fileChooser.getSelectedFile();
                     //This is where a real application would open the file.
                     try {
+                        services.sendFile(file,sendTo);
+                            synchronized ((services.t)){
+                                (services.t).wait();
+                            }
+                        System.out.println("File sent to "+sendTo);
+                        taChat.append("Sent "+file.getName()+" to "+sendTo+"\n");
 
-                            services.sendFile(file,sendTo);
-                            System.out.println("File sent to "+sendTo);
-                            taChat.append("Sent "+file.getName()+" to "+sendTo+"\n");
 
-
-
-                    } catch (IOException ex) {
+                    } catch (IOException | InterruptedException ex) {
                         ex.printStackTrace();
                     }
                 } else {

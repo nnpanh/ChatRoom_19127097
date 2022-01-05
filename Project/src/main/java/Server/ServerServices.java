@@ -189,6 +189,7 @@ public class ServerServices extends Thread {
 
     private void handleLogOut() throws IOException {
         sendMessage("close");
+        server.remove(this);
         for (ServerServices otherClient : server.getClients()){
             otherClient.sendMessage("quit "+username);
         }
@@ -234,7 +235,7 @@ public class ServerServices extends Thread {
         ) {
             if (otherClient.getLogin().equals(sendTo)) {
                 System.out.println("Send file to " + otherClient.getLogin());
-                otherClient.sendMessage("file " + fileSize + " " + fileName +" "+username);
+                otherClient.sendMessage("file " + fileSize + " " + fileName +" " + username);
                 otherClient.sendFile();
                 break;
             }
@@ -256,7 +257,7 @@ public class ServerServices extends Thread {
     }
 
     private void receivedFile(String username, String fileSize) throws IOException {
-        System.out.println("Sending files");
+        System.out.println("Receiving files");
 
         int bytes = 0;
         FileOutputStream fileOutputStream = new FileOutputStream("Project/resource/temp/" + username);
