@@ -138,8 +138,6 @@ public class ClientServices{
         }
         fileOutputStream.close();
         System.out.println("File received from server");
-        synchronized (t) {
-            t.notifyAll();
-        }
+
     }
 }

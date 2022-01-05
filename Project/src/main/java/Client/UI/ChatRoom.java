@@ -7,6 +7,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ChatRoom extends  JFrame{
     private final ArrayList<String> onlineUser;
@@ -51,14 +52,11 @@ public class ChatRoom extends  JFrame{
                         taChat.append(msg[1] + ": " + msg[2] + "\n");
                     }
                     case "file" -> {
+
                         list.setSelectedValue(msg[3],true);
-                        services.receivedFile(msg[1], msg[2]);
-                        synchronized (services.t){
-                            (services.t).wait();
-                        }
-                        if (list.getSelectedValue()==null || !list.getSelectedValue().equals(msg[3]))
-                            taChat.setText("Received "+msg[2]+" from "+msg[3]+"\n");
-                        else taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
+                            services.receivedFile(msg[1], msg[2]);
+                            taChat.append("Received "+msg[2]+" from "+msg[3]+"\n");
+
                     }
                     case "quit" ->{
                         onlineUser.remove(msg[1]);
