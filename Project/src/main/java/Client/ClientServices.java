@@ -34,18 +34,6 @@ public class ClientServices{
 
     public void ChatRoom() throws IOException, InterruptedException {
         ChatRoom chatRoom = new ChatRoom(this,username);
-        chatRoom.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                try {
-                   disconnect();
-                   System.exit(0);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });
         chatRoom.run();
     }
 
@@ -60,19 +48,17 @@ public class ClientServices{
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
+            finally {
+                //Tell server to close
+                output.write("quit");
+                output.newLine();
+                output.flush();
+                //Close
+                input.close();
+                output.close();
+                clientSocket.close();
+            }
         }
-    }
-
-    public void disconnect() throws IOException {
-        System.out.println("Client closed");
-        //Tell server to close
-        output.write("quit");
-        output.newLine();
-        output.flush();
-        //Close
-        input.close();
-        output.close();
-        clientSocket.close();
     }
 
     private void loadData() throws IOException {
@@ -134,8 +120,8 @@ public class ClientServices{
             size -= bytes;      // read upto file size
         }
         fileOutputStream.close();
+        System.out.println("File received from server");
         synchronized (t) {
-            System.out.println("File received from server");
             t.notifyAll();
         }
     }

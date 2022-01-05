@@ -145,7 +145,6 @@ public class ServerServices extends Thread {
     @Override
     public void run() {
         try {
-            boolean stopFlag=false;
             String receivedMessage;
             do {
                 receivedMessage = input.readLine();
@@ -163,16 +162,12 @@ public class ServerServices extends Thread {
                     case "file" -> {
                         handleFile(token[1], token[2], token[3]);
                     }
-                    case "quit"->{
-                        handleLogOut();
-                        stopFlag=true;
-                    }
 
                     default -> System.out.println(token[0]);
 
                 }
             }
-            while (!stopFlag);
+            while (true);
 
         } catch (IOException | InterruptedException e) {
             try {
@@ -184,13 +179,6 @@ public class ServerServices extends Thread {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-        }
-    }
-
-    private void handleLogOut() throws IOException {
-        sendMessage("close");
-        for (ServerServices otherClient : server.getClients()){
-            otherClient.sendMessage("quit "+username);
         }
     }
 
@@ -234,7 +222,7 @@ public class ServerServices extends Thread {
         ) {
             if (otherClient.getLogin().equals(sendTo)) {
                 System.out.println("Send file to " + otherClient.getLogin());
-                otherClient.sendMessage("file " + fileSize + " " + fileName +" "+username);
+                otherClient.sendMessage("file " + fileSize + " " + fileName);
                 otherClient.sendFile();
                 break;
             }
