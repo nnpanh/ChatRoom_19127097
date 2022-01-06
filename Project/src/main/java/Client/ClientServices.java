@@ -2,12 +2,10 @@ package Client;
 
 import Client.UI.ChatRoom;
 import Client.UI.Menu;
-import com.sun.security.jgss.GSSUtil;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class ClientServices{
     public Thread t;
@@ -59,8 +57,6 @@ public class ClientServices{
                 ChatRoom();
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
-            } finally {
-                disconnect();
             }
         }
     }
